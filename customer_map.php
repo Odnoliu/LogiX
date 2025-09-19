@@ -13,21 +13,26 @@ $points = [
 // Demo cảnh báo
 $alerts = [
   ['id'=>'alert-2','type'=>'Traffic','name'=>'Khu vực ùn tắc giao thông','coords'=>[105.779464,10.046051],'icon'=>'./images/traffic.png'],
-   ['id'=>'alert-1','type'=>'Flood','name'=>'Khu vực ngập lụt','coords'=>[105.773663,10.051739],'icon'=>'./images/flood.png'],
-   ['id'=>'alert-1','type'=>'Flood','name'=>'Khu vực ngập lụt','coords'=>[ 105.757084,10.026777],'icon'=>'./images/flood.png'],
-  ['id'=>'alert-2','type'=>'Traffic','name'=>'Khu vực ùn tắc giao thông','coords'=>[105.764714,10.021395],'icon'=>'./images/traffic.png'],
+  ['id'=>'alert-1','type'=>'Flood','name'=>'Khu vực ngập lụt','coords'=>[105.773663,10.051739],'icon'=>'./images/flood.png'],
+  ['id'=>'alert-3','type'=>'Flood','name'=>'Khu vực ngập lụt','coords'=>[105.757084,10.026777],'icon'=>'./images/flood.png'],
+  ['id'=>'alert-4','type'=>'Traffic','name'=>'Khu vực ùn tắc giao thông','coords'=>[105.764714,10.021395],'icon'=>'./images/traffic.png'],
 ];
 
 // Shipper xuất phát
 $default_shipper = [105.750790,10.053068];
 
-// 2 điểm đến demo (image) + 2 smartlocker
-$destinations = [
-  ['id'=>'dest-img1','name'=>'Điểm giao hàng của mã đơn DH00001','coords'=>[105.771733,10.036914],'icon'=>'./images/destination.png'],
-  ['id'=>'dest-img2','name'=>'Điểm giao hàng của mã đơn DH00002','coords'=>[105.767525,10.045412],'icon'=>'./images/destination.png'],
-  ['id'=>'dest-locker1','name'=>'Giao tại SmartLocker 1 của mã đơn DH00003','coords'=>$points[4]['coords'],'icon'=>$points[4]['icon'],'image'=>'./images/full_smart_locker.jpg'],
-  ['id'=>'dest-locker2','name'=>'Giao tại SmartLocker 2 của mã đơn DH00004','coords'=>$points[1]['coords'],'icon'=>$points[1]['icon'],'image'=>'./images/full_smart_locker.jpg'],
+// Mapping order_id -> destination
+$orderDestMap = [
+  "DH001" => $points[0], // locker 1
+  "DH002" => $points[1], // locker 2
+  "DH003" => $points[2], // locker 3
+  "DH004" => ['id'=>'dest-img1','name'=>'Điểm giao hàng của mã đơn DH004','coords'=>[105.771733,10.036914],'icon'=>'./images/destination.png'],
+  "DH005" => ['id'=>'dest-img2','name'=>'Điểm giao hàng của mã đơn DH005','coords'=>[105.785614,10.021705],'icon'=>'./images/destination.png']
 ];
+
+// Lấy order_id từ query
+$order_id = $_GET['order_id'] ?? null;
+$destination = $orderDestMap[$order_id] ?? null;
 ?>
 <!DOCTYPE html>
 <html lang="vi">
@@ -55,7 +60,6 @@ $destinations = [
   <div id="map"></div>
 
 <script>
-// Check login
 mapboxgl.accessToken = "pk.eyJ1IjoicHBodWNqcyIsImEiOiJjbTV5emdvNWUwbjhhMmpweXAybThmbmVhIn0.4PA9RDEf2HFu7jMuicJ1OQ";
 const map = new mapboxgl.Map({
   container:"map", style:"mapbox://styles/mapbox/streets-v11",
@@ -88,115 +92,45 @@ alerts.forEach(al=>{
 const shipperEl=document.createElement("div");
 shipperEl.className="marker-shipper";
 shipperEl.style.backgroundImage="url('./images/shipper.png')";
-new mapboxgl.Marker(shipperEl).setLngLat(<?php echo json_encode($default_shipper); ?>)
+const shipperCoords = <?php echo json_encode($default_shipper); ?>;
+new mapboxgl.Marker(shipperEl).setLngLat(shipperCoords)
   .setPopup(new mapboxgl.Popup({offset:25}).setHTML("<b>Shipper xuất phát từ Hub Vệ tinh</b>"))
   .addTo(map);
 
-// Destinations
-const destinations = <?php echo json_encode($destinations); ?>;
-destinations.forEach(dest=>{
+// Điểm đích từ order_id
+const destination = <?php echo json_encode($destination); ?>;
+if(destination){
   const el=document.createElement("div");
   el.className="marker";
-  el.style.backgroundImage=`url('${dest.icon}')`;
-  new mapboxgl.Marker(el).setLngLat(dest.coords)
+  el.style.backgroundImage=`url('${destination.icon}')`;
+  new mapboxgl.Marker(el).setLngLat(destination.coords)
     .setPopup(new mapboxgl.Popup({offset:25})
-      .setHTML(`
-        <div class="text-center">
-          <h3 class="font-bold text-blue-600">${dest.name}</h3>
-        </div>
-      `)).addTo(map);
-});
+      .setHTML(`<b>${destination.name}</b>`)).addTo(map);
 
-// Hàm vẽ tuyến đường
-// Hàm vẽ tuyến đường
-async function drawRoute(start, end, routeId) {
-  const query = await fetch(`https://api.mapbox.com/directions/v5/mapbox/driving/${start};${end}?geometries=geojson&alternatives=true&steps=true&access_token=${mapboxgl.accessToken}`);
-  const json = await query.json();
-  const routes = json.routes;
-
-  if (!routes || routes.length === 0) return;
-
-  // Vẽ tuyến chính
-  const mainRoute = routes[0];
-  addRouteLayer(`main-route-${routeId}`, mainRoute.geometry, "#3b82f6", 5);
-
-  // Check cảnh báo
-  let danger = false;
-  alerts.forEach(al => {
-    const pt = turf.point(al.coords);
-    const line = turf.lineString(mainRoute.geometry.coordinates);
-    if (turf.booleanPointOnLine(pt, line, { tolerance: 0.001 })) danger = true;
-  });
-
-  // Nếu có cảnh báo => vẽ tuyến thay thế
-  if (danger && routes[1]) {
-    const altRoute = routes[1];
-    addRouteLayer(`alt-route-${routeId}`, altRoute.geometry, "#f87171", 4, "[2,2]");
-
-    Toastify({
-      text: `⚠️ Tuyến chính đến "${end}" đi qua vùng cảnh báo. Click tuyến đỏ để chọn thay thế!`,
-      duration: 6000,
-      gravity: "top",
-      position: "right",
-      style: { background: "#ef4444" }
-    }).showToast();
-
-    // Cho phép click vào tuyến thay thế để highlight
-    map.on("click", `alt-route-${routeId}`, () => {
-      map.setPaintProperty(`alt-route-${routeId}`, "line-color", "#22c55e"); // xanh lá khi chọn
-      map.setPaintProperty(`main-route-${routeId}`, "line-opacity", 0.3);
-      Toastify({
-        text: "✅ Bạn đã chọn tuyến thay thế!",
-        duration: 4000,
-        gravity: "top",
-        position: "right",
-        style: { background: "#16a34a" }
-      }).showToast();
-    });
-  }
+  map.on("load",()=>{ drawRoute(shipperCoords, destination.coords); });
+}else{
+  alert("❌ Không tìm thấy order_id hợp lệ!");
 }
 
-// Hàm add tuyến
-function addRouteLayer(id, geometry, color, width, dash = null) {
-  if (map.getSource(id)) return;
-  map.addSource(id, { type: "geojson", data: { type: "Feature", geometry } });
-  map.addLayer({
-    id, type: "line", source: id,
-    paint: {
-      "line-color": color,
-      "line-width": width,
-      "line-opacity": 0.8,
-      ...(dash ? { "line-dasharray": [2, 2] } : {})
-    }
-  });
+// Hàm vẽ tuyến đường
+async function drawRoute(start, end){
+  const query=await fetch(`https://api.mapbox.com/directions/v5/mapbox/driving/${start};${end}?geometries=geojson&alternatives=true&steps=true&access_token=${mapboxgl.accessToken}`);
+  const json=await query.json();
+  if(!json.routes || !json.routes.length) return;
+
+  const mainRoute=json.routes[0];
+  addRouteLayer("main-route",mainRoute.geometry,"#3b82f6",5);
 }
 
-map.on("load", () => {
-  // Vẽ tuyến từ shipper đến các điểm giao hàng
-  destinations.forEach((dest, i) => {
-    drawRoute(<?php echo json_encode($default_shipper); ?>, dest.coords, i);
-  });
-});
-
-
-// Hàm add tuyến
-function addRouteLayer(id,geometry,color,width,dash=null){
+// Thêm layer tuyến đường
+function addRouteLayer(id,geometry,color,width){
   if(map.getSource(id)) return;
   map.addSource(id,{type:"geojson",data:{type:"Feature",geometry}});
   map.addLayer({
-    id, type:"line", source:id,
-    paint:{"line-color":color,"line-width":width,"line-opacity":0.8,
-           ...(dash?{"line-dasharray":[2,2]}:{})}
+    id,type:"line",source:id,
+    paint:{"line-color":color,"line-width":width,"line-opacity":0.8}
   });
 }
-
-map.on("load",()=>{
-  // Vẽ tuyến từ shipper đến các điểm giao hàng
-  destinations.forEach((dest,i)=>{
-    console.log(dest.coords)
-    drawRoute(<?php echo json_encode($default_shipper); ?>,dest.coords);
-  });
-});
 </script>
 </body>
 </html>

@@ -43,7 +43,6 @@
     </div>
     <ul class="flex items-center gap-6 font-medium">
       <li><a href="customer.php" class="hover:underline">Trang chủ</a></li>
-      <li><a href="customer_map.php" class="hover:underline">Bản đồ</a></li>
       <li><a href="login.php" class="bg-white text-blue-700 px-3 py-1 rounded-lg shadow hover:bg-gray-100">Đăng xuất</a></li>
     </ul>
   </nav>
@@ -73,7 +72,8 @@
             <div>
               <h2 class="text-lg font-semibold text-gray-800 order-id">Mã đơn: -</h2>
               <p class="text-sm text-gray-600 customer-name">Khách hàng: -</p>
-              <p class="text-sm text-gray-600 order-status">Trạng thái: -</p>
+              <p class="text-sm text-gray-600 order-status">Shipper: -</p>
+
             </div>
             <div class="text-right">
               <p class="text-sm text-gray-500">Số lượng</p>
@@ -109,184 +109,188 @@
 
   <script>
     (() => {
-        const ordersContainer = document.getElementById("orders-container");
-        const loader = document.getElementById("loader");
-        const template = document.getElementById("order-card-template");
-        const refreshBtn = document.getElementById("refreshBtn");
-        const toastEl = document.getElementById("toast");
+      const ordersContainer = document.getElementById("orders-container");
+      const loader = document.getElementById("loader");
+      const template = document.getElementById("order-card-template");
+      const refreshBtn = document.getElementById("refreshBtn");
+      const toastEl = document.getElementById("toast");
 
-        const lockers = [{
-            id: "locker-1",
-            label: "Smart Locker 1 - Đại học Cần Thơ"
-          },
-          {
-            id: "locker-2",
-            label: "Smart Locker 2 - Lotte Mart Cần Thơ"
-          },
-          {
-            id: "locker-3",
-            label: "Smart Locker 3 - Coopmart"
-          },
-          {
-            id: "locker-4",
-            label: "Smart Locker 4 - BigC"
-          },
-          {
-            id: "locker-5",
-            label: "Smart Locker 5 - Sense City"
-          }
-        ];
-
-        const placeholderImages = [
-          "https://intriphat.com/wp-content/uploads/2023/03/hop-carton-dong-hang-3.jpg",
-          "https://get.pxhere.com/photo/box-carton-odyssey-product-design-packaging-and-labeling-package-delivery-221916.jpg",
-          "https://hopcartondonghang.com/wp-content/uploads/2023/08/thung-carton-dung-sau-rieng-14.jpg"
-        ];
-
-        // Dữ liệu ảo đơn hàng
-        const fakeOrders = [{
-            DH_Ma: "DH001",
-            KH_Ten: "Nguyễn Văn A",
-            DH_SoLuongKIH: 2,
-            DH_TongTien: 500000,
-            TT_Ma: "TT001"
-          },
-          {
-            DH_Ma: "DH002",
-            KH_Ten: "Trần Thị B",
-            DH_SoLuongKIH: 1,
-            DH_TongTien: 200000,
-            TT_Ma: "TT002"
-          },
-          {
-            DH_Ma: "DH003",
-            KH_Ten: "Lê Văn C",
-            DH_SoLuongKIH: 3,
-            DH_TongTien: 750000,
-            TT_Ma: "TT001"
-          },
-          {
-            DH_Ma: "DH004",
-            KH_Ten: "Phạm Thị D",
-            DH_SoLuongKIH: 5,
-            DH_TongTien: 1500000,
-            TT_Ma: "TT003"
-          },
-          {
-            DH_Ma: "DH005",
-            KH_Ten: "Huỳnh Văn E",
-            DH_SoLuongKIH: 4,
-            DH_TongTien: 990000,
-            TT_Ma: "TT001"
-          }
-        ];
-
-        const statusConfigs = {
-          'TT001': {
-            label: 'Đang Chờ Xử Lý',
-            btnText: 'Xác nhận giao hàng',
-            enabled: true
-          },
-          'TT002': {
-            label: 'Đang Giao Hàng',
-            btnText: 'Đang giao',
-            enabled: false
-          },
-          'TT003': {
-            label: 'Đã Giao Hàng',
-            btnText: 'Đã giao',
-            enabled: false
-          }
-        };
-
-        function showToast(msg, type = "info") {
-          toastEl.className = "toast fixed right-4 bottom-4 z-50";
-          toastEl.innerHTML = `<div class="px-4 py-2 rounded-lg shadow-lg text-white ${type === 'success' ? 'bg-green-600' : type === 'error' ? 'bg-red-600' : 'bg-blue-600'}">${msg}</div>`;
-          toastEl.classList.remove('hidden');
-          clearTimeout(toastEl._t);
-          toastEl._t = setTimeout(() => {
-            toastEl.classList.add('hidden');
-          }, 3000);
+      const lockers = [{
+          id: "locker-1",
+          label: "Smart Locker 1 - Đại học Cần Thơ"
+        },
+        {
+          id: "locker-2",
+          label: "Smart Locker 2 - Lotte Mart Cần Thơ"
+        },
+        {
+          id: "locker-3",
+          label: "Smart Locker 3 - Coopmart"
+        },
+        {
+          id: "locker-4",
+          label: "Smart Locker 4 - BigC"
+        },
+        {
+          id: "locker-5",
+          label: "Smart Locker 5 - Sense City"
+        } ,
+        {
+          id: "Địa điểm: ",
+          label: "91D Lý Tự Trọng, P.An Phú, Q.Ninh Kiều, TP.Cần Thơ"
         }
+      ];
 
-        function getRandomTime() {
-          // Random trong khoảng 08:00 - 20:00
-          const startHour = 8;
-          const endHour = 20;
-          const hour = Math.floor(Math.random() * (endHour - startHour + 1)) + startHour;
-          const minute = Math.floor(Math.random() * 60);
-          return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+      const placeholderImages = [
+        "https://intriphat.com/wp-content/uploads/2023/03/hop-carton-dong-hang-3.jpg",
+        "https://get.pxhere.com/photo/box-carton-odyssey-product-design-packaging-and-labeling-package-delivery-221916.jpg",
+        "https://hopcartondonghang.com/wp-content/uploads/2023/08/thung-carton-dung-sau-rieng-14.jpg"
+      ];
+
+      // Dữ liệu ảo đơn hàng
+      const fakeOrders = [{
+          DH_Ma: "DH001",
+          KH_Ten: "Nguyễn Văn A",
+          DH_SoLuongKIH: 2,
+          DH_TongTien: 500000,
+          TT_Ma: "TT001"
+        },
+        {
+          DH_Ma: "DH002",
+          KH_Ten: "Nguyễn Văn A",
+          DH_SoLuongKIH: 1,
+          DH_TongTien: 200000,
+          TT_Ma: "TT002"
+        },
+        {
+          DH_Ma: "DH003",
+          KH_Ten: "Nguyễn Văn A",
+          DH_SoLuongKIH: 3,
+          DH_TongTien: 750000,
+          TT_Ma: "TT001"
+        },
+        {
+          DH_Ma: "DH004",
+          KH_Ten: "Nguyễn Văn A",
+          DH_SoLuongKIH: 5,
+          DH_TongTien: 1500000,
+          TT_Ma: "TT003"
+        },
+        {
+          DH_Ma: "DH005",
+          KH_Ten: "Nguyễn Văn A",
+          DH_SoLuongKIH: 4,
+          DH_TongTien: 990000,
+          TT_Ma: "TT001"
         }
+      ];
 
-        function renderOrders(orders) {
-          ordersContainer.innerHTML = "";
-          if (!orders.length) {
-            ordersContainer.innerHTML = `<div class="col-span-full text-gray-600 text-center">Không có đơn hàng để hiển thị.</div>`;
-            return;
-          }
-            orders.forEach((order) => {
-              const clone = template.content.cloneNode(true);
-              const imgEl = clone.querySelector("img");
-              const orderIdEl = clone.querySelector(".order-id");
-              const customerNameEl = clone.querySelector(".customer-name");
-              const statusEl = clone.querySelector(".order-status");
-              const qtyEl = clone.querySelector(".qty");
-              const totalEl = clone.querySelector(".total");
-              const mapLinkEl = clone.querySelector(".map-link");
-              const confirmBtn = clone.querySelector(".confirm-btn");
-              const placeSelect = clone.querySelector(".place-select");
-              const viewMapBtn = clone.querySelector(".btn-view-map");
-              const timeDisplay = clone.querySelector(".time-display");
+      const statusConfigs = {
+        'TT001': {
+          label: 'Ngô Đại Nam - 0912345678 - 65D 122345',
+          btnText: 'Xác nhận giao hàng',
+          enabled: true
+        },
+        'TT002': {
+          label: 'Trần Thiên Thanh - 09123455555 - 65D 012345',
+          btnText: 'Đang giao',
+          enabled: false
+        },
+        'TT003': {
+          label: 'Hứa Hoàng Minh - 09123466666 - 65D 122345',
+          btnText: 'Đã giao',
+          enabled: false
+        }
+      };
 
-              imgEl.src = placeholderImages[Math.floor(Math.random() * placeholderImages.length)];
-              orderIdEl.textContent = `Mã đơn: ${order.DH_Ma}`;
-              customerNameEl.textContent = `Khách hàng: ${order.KH_Ten}`;
-              qtyEl.textContent = order.DH_SoLuongKIH;
-              totalEl.textContent = new Intl.NumberFormat('vi-VN').format(order.DH_TongTien) + " đ";
+      function showToast(msg, type = "info") {
+        toastEl.className = "toast fixed right-4 bottom-4 z-50";
+        toastEl.innerHTML = `<div class="px-4 py-2 rounded-lg shadow-lg text-white ${type === 'success' ? 'bg-green-600' : type === 'error' ? 'bg-red-600' : 'bg-blue-600'}">${msg}</div>`;
+        toastEl.classList.remove('hidden');
+        clearTimeout(toastEl._t);
+        toastEl._t = setTimeout(() => {
+          toastEl.classList.add('hidden');
+        }, 3000);
+      }
 
-              const statusConfig = statusConfigs[order.TT_Ma] || {
-                label: "Không xác định",
-                btnText: "-",
-                enabled: false
-              };
-              statusEl.textContent = `Trạng thái: ${statusConfig.label}`;
-              confirmBtn.textContent = statusConfig.btnText;
-              confirmBtn.disabled = !statusConfig.enabled;
+      function getRandomTime() {
+        // Random trong khoảng 08:00 - 20:00
+        const startHour = 8;
+        const endHour = 20;
+        const hour = Math.floor(Math.random() * (endHour - startHour + 1)) + startHour;
+        const minute = Math.floor(Math.random() * 60);
+        return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+      }
 
-              // Thời gian random hôm nay
-              const randomTime = getRandomTime();
-              timeDisplay.textContent = `${randomTime} hôm nay`;
+      function renderOrders(orders) {
+        ordersContainer.innerHTML = "";
+        if (!orders.length) {
+          ordersContainer.innerHTML = `<div class="col-span-full text-gray-600 text-center">Không có đơn hàng để hiển thị.</div>`;
+          return;
+        }
+        orders.forEach((order) => {
+          const clone = template.content.cloneNode(true);
+          const imgEl = clone.querySelector("img");
+          const orderIdEl = clone.querySelector(".order-id");
+          const customerNameEl = clone.querySelector(".customer-name");
+          const statusEl = clone.querySelector(".order-status");
+          const qtyEl = clone.querySelector(".qty");
+          const totalEl = clone.querySelector(".total");
+          const mapLinkEl = clone.querySelector(".map-link");
+          const confirmBtn = clone.querySelector(".confirm-btn");
+          const placeSelect = clone.querySelector(".place-select");
+          const viewMapBtn = clone.querySelector(".btn-view-map");
+          const timeDisplay = clone.querySelector(".time-display");
 
-              // Map links
-              mapLinkEl.href = `customer_map.php?order_id=${order.DH_Ma}`;
-              viewMapBtn.addEventListener('click', () => {
-                window.location.href = `customer_map.php?order_id=${order.DH_Ma}`;
-              });
+          imgEl.src = placeholderImages[Math.floor(Math.random() * placeholderImages.length)];
+          orderIdEl.textContent = `Mã đơn: ${order.DH_Ma}`;
+          customerNameEl.textContent = `Khách hàng: ${order.KH_Ten}`;
+          qtyEl.textContent = order.DH_SoLuongKIH;
+          totalEl.textContent = new Intl.NumberFormat('vi-VN').format(order.DH_TongTien) + " đ";
 
-              // Populate place select
-              lockers.forEach(l => {
-                const opt = document.createElement("option");
-                opt.value = l.id;
-                opt.textContent = l.label;
-                placeSelect.appendChild(opt);
-              });
+          const statusConfig = statusConfigs[order.TT_Ma] || {
+            label: "Không xác định",
+            btnText: "-",
+            enabled: false
+          };
+          statusEl.textContent = `Shipper: ${statusConfig.label}`;
+          confirmBtn.textContent = statusConfig.btnText;
+          confirmBtn.disabled = !statusConfig.enabled;
 
-              confirmBtn.addEventListener('click', () => {
-                showToast(`Đơn ${order.DH_Ma} đã được xác nhận giao lúc ${randomTime}.`, "success");
-                confirmBtn.disabled = true;
-                confirmBtn.textContent = "Đang giao";
-              });
+          // Thời gian random hôm nay
+          const randomTime = getRandomTime();
+          timeDisplay.textContent = `${randomTime} hôm nay`;
 
-              ordersContainer.appendChild(clone);
-            });
-          }
-
-          refreshBtn.addEventListener('click', () => renderOrders(fakeOrders));
-          document.addEventListener('DOMContentLoaded', () => {
-            loader.style.display = "none";
-            renderOrders(fakeOrders);
+          // Map links
+          mapLinkEl.href = `customer_map.php?order_id=${order.DH_Ma}`;
+          viewMapBtn.addEventListener('click', () => {
+            window.location.href = `customer_map.php?order_id=${order.DH_Ma}`;
           });
-        })();
+
+          // Populate place select
+          lockers.forEach(l => {
+            const opt = document.createElement("option");
+            opt.value = l.id;
+            opt.textContent = l.label;
+            placeSelect.appendChild(opt);
+          });
+
+          confirmBtn.addEventListener('click', () => {
+            showToast(`Đơn ${order.DH_Ma} đã được xác nhận giao lúc ${randomTime}.`, "success");
+            confirmBtn.disabled = true;
+            confirmBtn.textContent = "Đang giao";
+          });
+
+          ordersContainer.appendChild(clone);
+        });
+      }
+
+      refreshBtn.addEventListener('click', () => renderOrders(fakeOrders));
+      document.addEventListener('DOMContentLoaded', () => {
+        loader.style.display = "none";
+        renderOrders(fakeOrders);
+      });
+    })();
   </script>
 </body>
 

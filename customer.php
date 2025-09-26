@@ -134,9 +134,9 @@
         {
           id: "locker-5",
           label: "Smart Locker 5 - Sense City"
-        } ,
+        },
         {
-          id: "Địa điểm: ",
+          id: "custom-address",
           label: "91D Lý Tự Trọng, P.An Phú, Q.Ninh Kiều, TP.Cần Thơ"
         }
       ];
@@ -239,6 +239,7 @@
           const mapLinkEl = clone.querySelector(".map-link");
           const confirmBtn = clone.querySelector(".confirm-btn");
           const placeSelect = clone.querySelector(".place-select");
+          placeSelect.id = `place-select-${order.DH_Ma}`;
           const viewMapBtn = clone.querySelector(".btn-view-map");
           const timeDisplay = clone.querySelector(".time-display");
 
@@ -261,12 +262,6 @@
           const randomTime = getRandomTime();
           timeDisplay.textContent = `${randomTime} hôm nay`;
 
-          // Map links
-          mapLinkEl.href = `customer_map.php?order_id=${order.DH_Ma}`;
-          viewMapBtn.addEventListener('click', () => {
-            window.location.href = `customer_map.php?order_id=${order.DH_Ma}`;
-          });
-
           // Populate place select
           lockers.forEach(l => {
             const opt = document.createElement("option");
@@ -274,11 +269,18 @@
             opt.textContent = l.label;
             placeSelect.appendChild(opt);
           });
-
+          let val = null;
           confirmBtn.addEventListener('click', () => {
             showToast(`Đơn ${order.DH_Ma} đã được xác nhận giao lúc ${randomTime}.`, "success");
             confirmBtn.disabled = true;
             confirmBtn.textContent = "Đang giao";
+            const sel = document.getElementById(`place-select-${order.DH_Ma}`);
+            val = sel.value;
+          });
+          // Map links
+          mapLinkEl.href = `customer_map.php?order_id=${encodeURIComponent(order.DH_Ma)}&dest_id=${encodeURIComponent(val)}`;
+          viewMapBtn.addEventListener('click', () => {
+            window.location.href = `customer_map.php?order_id=${encodeURIComponent(order.DH_Ma)}&dest_id=${encodeURIComponent(val)}`;
           });
 
           ordersContainer.appendChild(clone);

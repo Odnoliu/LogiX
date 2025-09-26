@@ -10,6 +10,9 @@ $points = [
   ['id'=>'warehouse-2','type'=>'warehouse','name'=>'Hub Chính','coords'=>[105.783084,10.013510],'icon'=>'.//images/default_point/warehouse.png'],
 ];
 
+$address = [
+  ['id'=>'custom-address','type'=>'address','name'=>'91D Lý Tự Trọng','coords'=>[105.777093,10.037006],'icon'=>'./images/destination.png']
+];
 // Demo cảnh báo
 $alerts = [
   ['id'=>'alert-2','type'=>'Traffic','name'=>'Khu vực ùn tắc giao thông','coords'=>[105.779464,10.046051],'icon'=>'./images/traffic.png'],
@@ -21,24 +24,28 @@ $alerts = [
 // Shipper xuất phát
 $default_shipper = [105.750790,10.053068];
 
-// Mapping order_id -> destination
-$orderDestMap = [
-  "DH001" => $points[0], // locker 1
-  "DH002" => $points[1], // locker 2
-  "DH003" => $points[2], // locker 3
-  "DH004" => ['id'=>'dest-img1','name'=>'Điểm giao hàng của mã đơn DH004','coords'=>[105.771733,10.036914],'icon'=>'./images/destination.png'],
-  "DH005" => ['id'=>'dest-img2','name'=>'Điểm giao hàng của mã đơn DH005','coords'=>[105.785614,10.021705],'icon'=>'./images/destination.png']
-];
 
 // Lấy order_id từ query
-$order_id = $_GET['order_id'] ?? null;
-$destination = $orderDestMap[$order_id] ?? null;
+$order_id = isset($_GET['order_id']) ? $_GET['order_id'] : null;
+$dest_id = isset($_GET['dest_id']) ? $_GET['dest_id'] : null;
+$destination = null;
+if ($dest_id) {
+  foreach ($points as $pt) {
+    if ($pt['id'] == $dest_id) {
+      $destination = $pt;
+      break;
+    }
+  }
+  if($destination === null) {
+    $destination = $address[0]; // Mặc định địa chỉ tùy chỉnh
+  }
+}
 ?>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <title>Bản đồ giao hàng & cảnh báo</title>
+  <title>Bản đồ trả hàng & cảnh báo</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link href="https://api.mapbox.com/mapbox-gl-js/v3.15.0/mapbox-gl.css" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
@@ -99,6 +106,7 @@ new mapboxgl.Marker(shipperEl).setLngLat(shipperCoords)
 
 // Điểm đích từ order_id
 const destination = <?php echo json_encode($destination); ?>;
+console.log(destination)
 if(destination){
   const el=document.createElement("div");
   el.className="marker";

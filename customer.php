@@ -121,7 +121,7 @@
         },
         {
           id: "locker-2",
-          label: "Smart Locker 2 - Lotte Mart Cần Thơ"
+          label: "Smart Locker 2 -Mega Market Cần Thơ"
         },
         {
           id: "locker-3",

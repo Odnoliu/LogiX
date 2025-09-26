@@ -1,11 +1,11 @@
 <?php
 // 7 điểm cố định (5 Smart Locker, 2 Kho)
 $points = [
-  ['id'=>'locker-1','type'=>'locker','name'=>'Smart Locker GO! Cần Thơ','coords'=>[105.782405,10.013725],'icon'=>'./images/smart_locker_point/locker.png'],
-  ['id'=>'locker-2','type'=>'locker','name'=>'Smart Locker Đại học Cần Thơ','coords'=>[105.770782,10.029144],'icon'=>'./images/smart_locker_point/locker.png'],
-  ['id'=>'locker-3','type'=>'locker','name'=>'Smart Locker Sense City Cần Thơ','coords'=>[105.785598,10.034457],'icon'=>'./images/smart_locker_point/locker.png'],
-  ['id'=>'locker-4','type'=>'locker','name'=>'Smart Locker Mega Market','coords'=>[105.761449,10.023039],'icon'=>'./images/smart_locker_point/locker.png'],
-  ['id'=>'locker-5','type'=>'locker','name'=>'Smart Locker Coop Mart','coords'=>[105.770930,10.054364],'icon'=>'./images/smart_locker_point/locker.png'],
+  ['id'=>'locker-4','type'=>'locker','name'=>'Smart Locker GO! Cần Thơ','coords'=>[105.782405,10.013725],'icon'=>'./images/smart_locker_point/locker.png'],
+  ['id'=>'locker-1','type'=>'locker','name'=>'Smart Locker Đại học Cần Thơ','coords'=>[105.770782,10.029144],'icon'=>'./images/smart_locker_point/locker.png'],
+  ['id'=>'locker-5','type'=>'locker','name'=>'Smart Locker Sense City Cần Thơ','coords'=>[105.785598,10.034457],'icon'=>'./images/smart_locker_point/locker.png'],
+  ['id'=>'locker-2','type'=>'locker','name'=>'Smart Locker Mega Market','coords'=>[105.761449,10.023039],'icon'=>'./images/smart_locker_point/locker.png'],
+  ['id'=>'locker-3','type'=>'locker','name'=>'Smart Locker Coop Mart','coords'=>[105.770930,10.054364],'icon'=>'./images/smart_locker_point/locker.png'],
   ['id'=>'warehouse-1','type'=>'warehouse','name'=>'Hub Vệ tinh','coords'=>[105.750637,10.052864],'icon'=>'./images/default_point/warehouse.png'],
   ['id'=>'warehouse-2','type'=>'warehouse','name'=>'Hub Chính','coords'=>[105.783084,10.013510],'icon'=>'.//images/default_point/warehouse.png'],
 ];
